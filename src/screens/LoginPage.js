@@ -1,16 +1,22 @@
-import { StyleSheet, Text, View, Pressable, TextInput,
-  Image
- } from 'react-native';
-
-import React,{useState} from 'react';
+import React, { useState } from 'react';
+import { StyleSheet, View,Image, } from 'react-native';
 import { Loading, CustomTextInput, CustomButton } from '../components';
+import { useSelector, useDispatch } from 'react-redux';
+import { setIsLoading } from '../redux/UserSlice';
+import { login } from '../redux/UserSlice';
 
 const LoginPage = ({navigation}) => {
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [result, setResult] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  // useState ile email ve parola durumlarının (state) yönetilmesi
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Redux store'dan user slice'ındaki isLoading verisinin okunması
+  const {isLoading} = useSelector((state) => state.user);
+  
+  console.log("email:",email,"\n password:", password, isLoading)
+  // Redux store'a action göndermek için useDispatch kullanılması
+  const dispatch = useDispatch();
   
   console.log(isLoading)
   return (
@@ -22,31 +28,34 @@ const LoginPage = ({navigation}) => {
         style={styles.image}
       />
 
-
+      {/* Email girişi için özel olarak oluşturulmuş metin giriş bileşeni */}
       <CustomTextInput
         title="Email"
-        isSecureText={false}
-        onChangeText={setEmail}
+        isSecureText={false} // Metnin gizlenmemesini sağlar
+        onChangeText={(text) => setEmail(text)} // Değişiklik olduğunda email state'ini günceller
         value={email}
         placeholder='Email Giriniz'
         />
       
+      {/* Parola girişi için özel olarak oluşturulmuş metin giriş bileşeni */}
       <CustomTextInput
         title="Parola"
         isSecureText={true}
-        onChangeText={setPassword}
+        onChangeText={(password) => setPassword(password)} // Değişiklik olduğunda parola state'ini günceller
         value={password}
         placeholder='Parola Giriniz'
         />
 
+      {/* Giriş yap butonu */}
       <CustomButton
         title="Giriş Yap"
         setWidth='80%'
-        onPress={() => setIsLoading(true)}
+        onPress={() => dispatch(login({email, password}))} // Tıklandığında login action'ını çağırır
         buttonColor='lightblue'
         buttonPressedColor='darkcyan'  
       />
 
+      {/* Kayıt sayfasına yönlendiren buton */}
       <CustomButton
         title="Aramıza Katıl"
         setWidth='40%'
@@ -55,7 +64,8 @@ const LoginPage = ({navigation}) => {
         buttonPressedColor='darkcyan'
       />
 
-        {isLoading ? <Loading changeIsLoading = {() => setIsLoading(false)}/>: null}
+        {/* isLoading true ise Loading bileşenini göster, değilse null (gösterme) */}
+        {isLoading ? <Loading changeIsLoading = {() => dispatch(setIsLoading(false))}/>: null}
     </View>
   );
 }
