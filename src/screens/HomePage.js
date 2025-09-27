@@ -67,6 +67,7 @@ const HomePage = () => {
     try {
       const docRef = doc(db, "reactNativeLesson", value);
       await updateDoc(docRef, {
+        
         content: updetTheData
       });
     } catch (error) {

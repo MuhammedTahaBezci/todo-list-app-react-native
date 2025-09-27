@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View,Image, } from 'react-native';
 import { Loading, CustomTextInput, CustomButton } from '../components';
 import { useSelector, useDispatch } from 'react-redux';
 import { setIsLoading } from '../redux/UserSlice';
-import { login } from '../redux/UserSlice';
+import { login, autoLogin } from '../redux/UserSlice';
 
 const LoginPage = ({navigation}) => {
 
   // useState ile email ve parola durumlarının (state) yönetilmesi
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('');  
 
   // Redux store'dan user slice'ındaki isLoading verisinin okunması
   const {isLoading} = useSelector((state) => state.user);
@@ -17,6 +17,12 @@ const LoginPage = ({navigation}) => {
   console.log("email:",email,"\n password:", password, isLoading)
   // Redux store'a action göndermek için useDispatch kullanılması
   const dispatch = useDispatch();
+
+  //kulllanıcı daha önce giriş yaptıysa otomatik giriş işlemi
+  //useEffect ile bileşen yüklendiğinde çalışacak kod
+  useEffect(() => {
+   dispatch(autoLogin())
+  }, [])
   
   console.log(isLoading)
   return (

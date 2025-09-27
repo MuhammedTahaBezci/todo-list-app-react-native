@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Asenkron bir işlem olan kullanıcı girişi için createAsyncThunk kullanılması
 // 'user/login' benzersiz bir eylem türü (action type) oluşturur
@@ -17,8 +18,11 @@ export const login = createAsyncThunk(
             const token = user.stsTokenManager.accessToken;
 
             // Gerekli verileri bir nesne içinde toplama
-            const userData ={ token, user:user}
             console.log("Giriş Başarılı:", userData);
+            const userData ={ token, user:user}
+
+            await AsyncStorage.setItem('userToken', token); // Token'ı AsyncStorage'a kaydetme
+            
 
             return {userData, error: null};
         } catch (error) {
@@ -28,6 +32,26 @@ export const login = createAsyncThunk(
         }
     }
 )
+
+//kullanıcı otomatik giriş işlemleri
+export const autoLogin = createAsyncThunk(
+    'user/autoLogin',
+    async () => {
+        try {
+            // AsyncStorage'dan token'ı alma
+            const token = await AsyncStorage.getItem('userToken');
+                // Token varsa döndür, yoksa hata fırlat
+                if (token) {
+                    return token;
+                }else {
+                    throw new Error('No token found');
+                }
+        } catch (error) {
+            throw error; // Hatanın ekstraReducers tarafından yakalanması için hatayı tekrar fırlatma  
+        }
+    }
+)
+
 
 // Redux slice'ın başlangıç durumu (initial state)
 const initialState = {
@@ -58,6 +82,7 @@ export const userSlice = createSlice({
 
     },
     // Asenkron eylemleri (thunk'ları) ele almak için extraReducers kullanımı
+    // .addCase ile her bir asenkron eylem durumu (pending, fulfilled, rejected) için durum güncellemeleri tanımlanır
     extraReducers: (builder) =>{
         builder
         // login işlemi başladığında (pending)
@@ -79,7 +104,27 @@ export const userSlice = createSlice({
             state.isLoading = false;  // Yükleme durumunu false yap
             state.error = action.error.message; // Hata mesajını state'e kaydet
         })
-
+        
+        // autoLogin işlemi başladığında (pending)
+        .addCase(autoLogin.pending, (state) => {
+            state.isLoading = true; // Yükleme durumunu true yap
+            state.isAuth = false; // Kimlik doğrulama durumunu false yap
+        })
+        
+        // autoLogin işlemi başarılı olduğunda (fulfilled)
+        .addCase(autoLogin.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.isAuth = true;
+            // Gelen veriyi (payload) state'e kaydet
+            state.token = action.payload;
+        })
+        // autoLogin işlemi reddedildiğinde veya hata oluştuğunda (rejected)
+        .addCase(autoLogin.rejected, (state, action) => {
+            state.isLoading = false;  // Yükleme durumunu false yap
+            state.isAuth = false; // Kimlik doğrulama durumunu false yap
+            state.token = null; // Token'ı null yap
+        })
+       
     }
 })
 
