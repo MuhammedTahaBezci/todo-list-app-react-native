@@ -3,6 +3,8 @@ import React, {useState, useEffect} from 'react'
 import { collection, addDoc, getDocs,doc, deleteDoc, updateDoc } from "firebase/firestore"; 
 import { db } from '../../firebaseConfig';
 import CustomButton from '../components/CustomButton';
+import { useDispatch } from 'react-redux';
+import { logout } from '../redux/UserSlice';
 
 const HomePage = () => {
 
@@ -12,6 +14,8 @@ const HomePage = () => {
   const [isSaved, setIsSaved] = useState(false)
   // güncelleme için state
   const [updetTheData, setUpdetTheData] = useState('')
+  // fonksiyonları tetiklemek için dispatch
+  const dispatch = useDispatch();
 
   console.log(isSaved)
 
@@ -67,12 +71,16 @@ const HomePage = () => {
     try {
       const docRef = doc(db, "reactNativeLesson", value);
       await updateDoc(docRef, {
-        
         content: updetTheData
       });
     } catch (error) {
       
     }
+  }
+
+  // çıkış yapma fonksiyonu
+  const handlelogout = () => {
+    dispatch(logout());
   }
   
 
@@ -130,6 +138,14 @@ const HomePage = () => {
       buttonColor="lightblue"
       buttonPressedColor="darkcyan"
       onPress={updateData}
+      />
+
+      <CustomButton
+      title={"Çıkış Yap"}
+      setWidth="40%"
+      buttonColor="darkcyan"
+      buttonPressedColor="lightblue"
+      onPress={handlelogout}
       />
     </View>
   )
