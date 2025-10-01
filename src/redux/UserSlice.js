@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    signOut,
+    createUserWithEmailAndPassword, 
+    sendEmailVerification} from "firebase/auth";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Asenkron bir işlem olan kullanıcı girişi için createAsyncThunk kullanılması
@@ -62,6 +67,27 @@ export const logout = createAsyncThunk('user/logout', async() => {
     } catch (error) {
         throw error;
     }   
+})
+
+//kullanıcı kayıt işlemleri
+export const register = createAsyncThunk('user/register', async({email, password}) => {
+    try {
+        const auth = getAuth();
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password); // Yeni kullanıcı oluşturma
+
+        
+        const user = userCredential.user; // Kayıt olan kullanıcı bilgisi
+        const token = user.stsTokenManager.accessToken; // Kullanıcı token'ı
+
+        await sendEmailVerification(user); // E-posta doğrulama gönderme
+
+        await AsyncStorage.setItem('userToken', token); // Token'ı AsyncStorage'a kaydetme
+
+        return { user, token }; // Kullanıcı ve token bilgilerini döndürme
+        
+    } catch (error) {
+        throw error; // Hatanın ekstraReducers tarafından yakalanması için hatayı tekrar fırlatma
+    }
 })
 
 
@@ -151,6 +177,24 @@ export const userSlice = createSlice({
             state.isLoading = false;
             state.error = action.payload;
 
+        })
+
+        //pending isLoading true yapar
+        //fulfilled başarılı ise isLoading false yapar ve user ile token'ı state'e kaydeder
+        //rejected hata varsa isLoading false yapar ve error mesajını state'e kaydeder
+        .addCase(register.pending, (state) => {
+            state.isLoading = true;
+            state.isAuth = false;
+        })
+        .addCase(register.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.isAuth = true;
+            state.token = action.payload;
+        })
+        .addCase(register.rejected, (state, action) => {
+            state.isLoading = false;
+            state.isAuth = false;
+            state.error = "E-posta veya parola hatalı";
         })
     }
 })
