@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, TextInput, View, FlatList, SafeAreaView, Platform } from 'react-native'
 import React, {useState, useEffect} from 'react'
 import { collection, addDoc, getDocs,doc, deleteDoc, updateDoc } from "firebase/firestore"; 
 import { db } from '../../firebaseConfig';
 import CustomButton from '../components/CustomButton';
 import { useDispatch } from 'react-redux';
 import { logout } from '../redux/UserSlice';
+import { StatusBar } from 'expo-status-bar';
 
 const HomePage = () => {
 
@@ -82,10 +83,21 @@ const HomePage = () => {
   const handlelogout = () => {
     dispatch(logout());
   }
+
+  const renderItem = ({item}) => {
+
+    return (
+      <View style={styles.flaplistContainer}>
+        <Text>{item.id}</Text>
+        <Text>{item.title}</Text>
+        <Text>{item.content}</Text>
+      </View>
+    )
+  }
   
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
 
       <TextInput
         value={updateData}
@@ -93,21 +105,15 @@ const HomePage = () => {
         placeholder='veri girin'
         style={{width: "80%", height: 50, backgroundColor: "lightblue", marginBottom: 20, paddingHorizontal: 10, borderRadius: 20}}
       />
-      
-      {data.map((value,index) => {
-        return (
-          <Pressable 
-            onPress={()=> [updateData(value.id), setIsSaved(isSaved===false ? true : false)]}
-            key={index}>
-            <Text>{index}</Text>
-            <Text>{value.title}</Text>
-            <Text>{value.content}</Text>
-            <Text>{value.lesson}</Text>
-          </Pressable>
-        )
-      })}
 
-      
+      <FlatList
+        style={styles.flaplist}
+        data={data}
+        keyExtractor={item => item.id}
+        renderItem={renderItem}
+      />
+
+      <View style={styles.buttonContainer}>
       <CustomButton
       title={"kaydet"}
       setWidth="40%"
@@ -147,7 +153,8 @@ const HomePage = () => {
       buttonPressedColor="lightblue"
       onPress={handlelogout}
       />
-    </View>
+      </View>
+    </SafeAreaView>
   )
 }
 
@@ -156,8 +163,29 @@ export default HomePage
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: '#dde2f8ff',
+    paddingTop: 60
+  },
+  flaplistContainer:{
+    borderWidth: 1,
+    marginVertical:5,
+    flex:1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flaplist:{
+    width: '90%',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    flex: 1,
+    padding: 10,
+  },
+  buttonContainer:{
+    width: '100%',
+    marginBottom: 45,
+    alignItems: 'center',   
   }
+
 })
